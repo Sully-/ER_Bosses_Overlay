@@ -1,10 +1,12 @@
 #include "data.hpp"
+#include "scaling.hpp"
 
 #include "../hooking.hpp"
 #include "../memory.hpp"
 #include "../global.hpp"
 #include "../config.hpp"
 #include "../steamapi.hpp"
+
 
 #include <nlohmann/json.hpp>
 #include <ini.h>
@@ -54,6 +56,7 @@ void BossDataSet::load(bool hasDLC) {
             bd.boss = n["boss"];
             bd.place = n["place"];
             bd.flagId = n["flag_id"].get<uint32_t>();
+            bd.scaling = n["scaling"].get<uint8_t>();
             bd.index = index;
             bd.tip = bd.boss + ": " + bd.place;
             rd.bosses.push_back(index);
@@ -238,6 +241,7 @@ void BossDataSet::updateBosses() {
         flagResolved_ = true;
     }
     int cnt = 0;
+    int score = 0;
     std::fill(deadByRegionSwapTmp.begin(), deadByRegionSwapTmp.end(), 0);
     size_t sz = bosses_.size();
     for (size_t i = 0; i < sz; i++) {
@@ -246,6 +250,7 @@ void BossDataSet::updateBosses() {
         deadSwapTmp[i] = al;
         if (al) {
             cnt++;
+            score += scaling::Score::computeScore(b.scaling);
             deadByRegionSwapTmp[b.regionIndex]++;
         }
     }

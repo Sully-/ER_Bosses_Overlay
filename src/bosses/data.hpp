@@ -20,6 +20,7 @@ struct BossData {
     uint8_t bits = 0;
     size_t index = 0;
     size_t regionIndex = 0;
+    uint8_t scaling = 0;
 };
 
 struct RegionData {
@@ -43,6 +44,7 @@ public:
     [[nodiscard]] inline std::mutex &mutex() { return mutex_; }
     [[nodiscard]] inline const std::vector<bool> &dead() const { return dead_; }
     [[nodiscard]] inline bool challengeMode() const { return challengeMode_; }
+    [[nodiscard]] inline int score() const { return score_; }
     [[nodiscard]] inline int challengeTries() const { return challengeTries_; }
     [[nodiscard]] inline int challengeBest() const { return challengeBest_; }
     [[nodiscard]] inline int challengeDeaths() const { return reachedStrandedGraveyard_ ? playerDeaths_ - challengeDeathsOnStart_ : 0; }
@@ -97,6 +99,9 @@ private:
 
     HANDLE changeEvent_ = INVALID_HANDLE_VALUE;
     std::mutex mutex_;
+
+    // player score (in case you have a score based on the scaling
+    int score_;
 };
 
 extern BossDataSet gBossDataSet;

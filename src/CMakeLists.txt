@@ -31,6 +31,7 @@ add_library(${PROJECT_NAME} SHARED
     # Bosses panel
     bosses/data.cpp bosses/data.hpp
     bosses/render.cpp bosses/render.hpp
+    bosses/scaling.cpp bosses/scaling.hpp
 )
 target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS)
 if(NOT MSVC)
