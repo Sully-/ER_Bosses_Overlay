@@ -2,6 +2,7 @@ project(EROverlayDLL CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_compile_options(/bigobj)
 
 if(NOT MSVC)
     find_package(DirectXMath REQUIRED)
@@ -27,6 +28,7 @@ add_library(${PROJECT_NAME} SHARED
     util/sysfont.cpp util/sysfont.hpp
     util/string.cpp util/string.hpp
     util/vector.hpp
+    util/exprtk.hpp
 
     # Bosses panel
     bosses/data.cpp bosses/data.hpp

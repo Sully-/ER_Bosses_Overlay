@@ -7,6 +7,7 @@ include(CustomCompilerOptions)
 fix_compile_flags()
 fix_release_flags()
 add_static_runtime_option()
+add_compile_options(/bigobj)
 
 add_subdirectory(deps)
 add_subdirectory(src)
