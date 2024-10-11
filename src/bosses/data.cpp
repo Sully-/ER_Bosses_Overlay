@@ -147,7 +147,9 @@ void BossDataSet::update() {
     auto igt = inGameTime();
     if (igt == 0) return;
     updateBosses();
-    if (!challengeMode_ || igt < 0) return;
+    if (igt < 0) return;
+    if (!challengeMode_)
+
     updateChallengeMode();
 }
 
@@ -268,6 +270,15 @@ void BossDataSet::updateBosses() {
     auto ite = regionMap_.find(mapId / 1000);
     if (ite == regionMap_.end()) return;
     regionIndex_ = ite->second;
+}
+
+void BossDataSet::updateDeathCount()
+{
+    auto deaths = currentDeathCount();
+    std::unique_lock lock(mutex_);
+    if (deaths != playerDeaths_) {
+        playerDeaths_ = deaths;
+    }
 }
 
 void BossDataSet::updateChallengeMode() {

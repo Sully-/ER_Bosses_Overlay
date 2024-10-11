@@ -46,6 +46,7 @@ public:
     [[nodiscard]] inline int challengeTries() const { return challengeTries_; }
     [[nodiscard]] inline int challengeBest() const { return challengeBest_; }
     [[nodiscard]] inline int challengeDeaths() const { return reachedStrandedGraveyard_ ? playerDeaths_ - challengeDeathsOnStart_ : 0; }
+    [[nodiscard]] inline int deaths() const { return playerDeaths_; }
     [[nodiscard]] int inGameTime() const;
 
     void initMemoryAddresses();
@@ -56,6 +57,7 @@ public:
 
 private:
     void updateBosses();
+    void updateDeathCount();
     void updateChallengeMode();
     void checkForConfigChange();
     [[nodiscard]] int currentDeathCount() const;
