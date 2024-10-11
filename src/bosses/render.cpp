@@ -10,6 +10,8 @@
 
 #include <sstream>
 #include <algorithm>
+#include <chrono>
+#include <iomanip>
 
 namespace er::bosses {
 
@@ -64,6 +66,27 @@ inline static float calculatePos(float w, float n) {
     return w + w * n;
 }
 
+std::string ConvertMillisecondsToTimeString(int milliseconds) {
+    // Convertir les millisecondes en une durée
+    auto duration = std::chrono::milliseconds(milliseconds);
+
+    // Extraire les heures, minutes et secondes
+    auto hours = std::chrono::duration_cast<std::chrono::hours>(duration).count();
+    duration -= std::chrono::hours(hours);
+    auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration).count();
+    duration -= std::chrono::minutes(minutes);
+    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+
+    // Utiliser std::ostringstream pour formater le temps
+    std::ostringstream timeStream;
+    timeStream << std::setfill('0') << std::setw(2) << hours << ":"
+        << std::setfill('0') << std::setw(2) << minutes << ":"
+        << std::setfill('0') << std::setw(2) << seconds;
+
+    return timeStream.str();
+
+}
+
 void Render::render(bool &showFull) {
     auto *vp = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(ImVec2(calculatePos(vp->Size.x, posX_), calculatePos(vp->Size.y, posY_)),
@@ -80,7 +103,8 @@ void Render::render(bool &showFull) {
                 auto text = fmt::format(challengeText_, gBossDataSet.count(), gBossDataSet.total(), gBossDataSet.challengeBest(), gBossDataSet.challengeTries(), gBossDataSet.challengeDeaths());
                 ImGui::TextUnformatted(text.c_str());
             } else {
-                auto text = fmt::format(killText_, gBossDataSet.count(), gBossDataSet.total(), gBossDataSet.challengeDeaths());
+                auto totalseconds = gBossDataSet.inGameTime();
+                auto text = fmt::format("[{2}] DRL Training : {0}/{1}", gBossDataSet.count(), gBossDataSet.total(), ConvertMillisecondsToTimeString(totalseconds));
                 ImGui::TextUnformatted(text.c_str());
             }
         }
