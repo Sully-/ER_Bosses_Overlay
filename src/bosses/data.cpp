@@ -149,7 +149,7 @@ void BossDataSet::update() {
     updateBosses();
     if (igt < 0) return;
     if (!challengeMode_)
-
+        updateDeathCount();
     updateChallengeMode();
 }
 

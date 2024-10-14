@@ -68,17 +68,15 @@ inline static float calculatePos(float w, float n) {
 }
 
 std::string ConvertMillisecondsToTimeString(int milliseconds) {
-    // Convertir les millisecondes en une durée
+   
     auto duration = std::chrono::milliseconds(milliseconds);
-
-    // Extraire les heures, minutes et secondes
     auto hours = std::chrono::duration_cast<std::chrono::hours>(duration).count();
     duration -= std::chrono::hours(hours);
     auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration).count();
     duration -= std::chrono::minutes(minutes);
     auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
 
-    // Utiliser std::ostringstream pour formater le temps
+    // format time into : HH:MM:SS
     std::ostringstream timeStream;
     timeStream << std::setfill('0') << std::setw(2) << hours << ":"
         << std::setfill('0') << std::setw(2) << minutes << ":"
@@ -87,13 +85,71 @@ std::string ConvertMillisecondsToTimeString(int milliseconds) {
     return timeStream.str();
 
 }
+void Render::popupEnd(int nbDeath, int timer)
+{
+    auto* vp = ImGui::GetMainViewport();
+
+    const char* dead_text = timer >= TWO_HOURS_IN_MILLISECONDS ? "Timeout!" : "You died";
+
+    ImVec2 textSize = ImGui::CalcTextSize(dead_text);
+    
+    ImVec2 deadpopuppos;
+    deadpopuppos.x = (vp->Size.x - textSize.x) / 2.0f;
+    deadpopuppos.y = (vp->Size.y - textSize.y) / 3.0f;
+
+    ImGui::SetNextWindowPos(deadpopuppos, ImGuiCond_Appearing, ImVec2(.5f, .5f));
+    ImGui::OpenPopup("##dead");
+    if (ImGui::BeginPopupModal("##dead",
+        nullptr,
+        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove
+        | ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text(dead_text);
+        
+        ImGui::SameLine();
+
+        ImVec4 greenColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
+        ImVec4 blueColor = ImVec4(0.26f, 0.59f, 0.98f, 1.0f);
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, greenColor);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, blueColor);
+        ImGui::PushStyleColor(ImGuiCol_Button, greenColor);
+
+
+        // It will copy seed results in the future.
+        bool clicked = ImGui::Button("OK");
+
+        ImGui::PopStyleColor(3);
+        if (clicked) {
+            ImGui::CloseCurrentPopup();
+            endValidated_ = true;
+            popupBossIndex_ = -1;
+        }
+
+        ImGui::EndPopup();
+    }
+}
 
 void Render::render(bool &showFull) {
     auto* vp = ImGui::GetMainViewport();
 
+    int deaths = 0;
+    int ingameTime = 0;
+    
+    {
+        std::unique_lock lock(gBossDataSet.mutex());
+        deaths = gBossDataSet.deaths();
+        ingameTime = gBossDataSet.inGameTime();
+    }
+
+    // If you died or we are at the end of the timer and we did not click on 'OK' on this session.
+    if ((deaths > 0 || ingameTime >= TWO_HOURS_IN_MILLISECONDS) && !endValidated_)
+    {
+        popupEnd(deaths, ingameTime);
+    }
+
     ImGui::SetNextWindowPos(ImVec2(calculatePos(vp->Size.x, posX_), calculatePos(vp->Size.y, posY_)),
-                            ImGuiCond_Always,
-                            ImVec2(posX_ >= 0 ? 0.f : 1.f, posY_ >= 0 ? 0.f : 1.f));
+        ImGuiCond_Always,
+        ImVec2(posX_ >= 0 ? 0.f : 1.f, posY_ >= 0 ? 0.f : 1.f));
+
     if (!showFull) {
         ImGui::Begin("##bosses_window",
                      nullptr,
@@ -101,13 +157,12 @@ void Render::render(bool &showFull) {
                          | ImGuiWindowFlags_AlwaysAutoResize);
         {
             std::unique_lock lock(gBossDataSet.mutex());
-            auto deaths = gBossDataSet.challengeMode() ? gBossDataSet.challengeDeaths() : gBossDataSet.deaths();
             auto totalseconds = gBossDataSet.inGameTime();
             if (gBossDataSet.challengeMode()) {
                 auto text = fmt::format(challengeText_, gBossDataSet.count(), gBossDataSet.total(), gBossDataSet.challengeBest(), gBossDataSet.challengeTries(), gBossDataSet.challengeDeaths());
                 ImGui::TextUnformatted(text.c_str());
             } else {
-                auto text = fmt::format("[{2}] DRL Training : {0}/{1}", gBossDataSet.count(), gBossDataSet.total(), ConvertMillisecondsToTimeString(totalseconds));
+                auto text = fmt::format(seedFormatText_, gBossDataSet.count(), gBossDataSet.total(), ConvertMillisecondsToTimeString(totalseconds));
                 ImGui::TextUnformatted(text.c_str());
                 if (deaths > 0)
                 {
@@ -124,11 +179,11 @@ void Render::render(bool &showFull) {
     } else {
 
         ImGui::SetNextWindowSize(ImVec2(calculatePos(vp->Size.x, std::abs(width_)), calculatePos(vp->Size.y, std::abs(height_))), ImGuiCond_Always);
+
         ImGui::Begin("##bosses_window",
                      nullptr,
                      ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
         std::unique_lock lock(gBossDataSet.mutex());
-        auto deaths = gBossDataSet.challengeMode() ? gBossDataSet.challengeDeaths() : gBossDataSet.deaths();
         auto totalseconds = gBossDataSet.inGameTime();
         auto regionIndex = gBossDataSet.regionIndex();
         if (regionIndex != lastRegionIndex_) {
@@ -140,7 +195,7 @@ void Render::render(bool &showFull) {
             auto text = fmt::format(challengeText_, gBossDataSet.count(), gBossDataSet.total(), gBossDataSet.challengeBest(), gBossDataSet.challengeTries(), gBossDataSet.challengeDeaths());
             ImGui::TextUnformatted(text.c_str());
         } else {
-            auto text = fmt::format("[{2}] DRL Training : {0}/{1}", gBossDataSet.count(), gBossDataSet.total(), ConvertMillisecondsToTimeString(totalseconds));
+            auto text = fmt::format(seedFormatText_, gBossDataSet.count(), gBossDataSet.total(), ConvertMillisecondsToTimeString(totalseconds));
             ImGui::TextUnformatted(text.c_str());
             if (deaths > 0)
             {
@@ -209,6 +264,7 @@ void Render::render(bool &showFull) {
             }
         }
     }
+
     ImGui::End();
 }
 

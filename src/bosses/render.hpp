@@ -14,6 +14,8 @@ public:
     void render(bool &showFull) override;
 
 private:
+    void popupEnd(int nbDeath, int timer);
+    const std::string seedFormatText_ = "[{2}] DRL Training : {0}/{1}";
     std::string killText_;
     std::string challengeText_;
     bool allowRevive_ = false;
