@@ -4,18 +4,24 @@
 #include <windows.h>
 
 typedef unsigned int AppId_t;
+typedef unsigned long long CSteamID;
+struct ISteamUser;
 
 struct ISteamApps;
 extern "C" {
 ISteamApps *(__cdecl *SteamAPI_SteamApps_v008)() = nullptr;
 const char *(__cdecl *SteamAPI_ISteamApps_GetCurrentGameLanguage)(ISteamApps *) = nullptr;
 bool (__cdecl *SteamAPI_ISteamApps_BIsDlcInstalled)(ISteamApps *self, AppId_t appID) = nullptr;
+
+ISteamUser* (__cdecl* SteamAPI_SteamUser_v021)() = nullptr;
+CSteamID(__cdecl* SteamAPI_ISteamUser_GetSteamID)(ISteamUser*) = nullptr;
 }
 
 namespace er {
 
 static ISteamApps *sapps = nullptr;
 static std::wstring gameLanguage;
+static ISteamUser* suser = nullptr;
 
 bool initSteamAPI() {
 #define LOAD_STEAM_API(name) name = (decltype(name))GetProcAddress(handle, #name)
@@ -25,6 +31,9 @@ bool initSteamAPI() {
     LOAD_STEAM_API(SteamAPI_SteamApps_v008);
     LOAD_STEAM_API(SteamAPI_ISteamApps_GetCurrentGameLanguage);
     LOAD_STEAM_API(SteamAPI_ISteamApps_BIsDlcInstalled);
+ 
+    LOAD_STEAM_API(SteamAPI_SteamUser_v021);
+    LOAD_STEAM_API(SteamAPI_ISteamUser_GetSteamID);
 
     return true;
 }
@@ -70,6 +79,25 @@ bool isDLCInstalled(unsigned int dlc) {
     if (!sapps)
         sapps = SteamAPI_SteamApps_v008();
     return SteamAPI_ISteamApps_BIsDlcInstalled(sapps, dlc);
+}
+
+unsigned long long getPlayerSteamID() {
+    if (!SteamAPI_SteamUser_v021) {
+        fwprintf(stderr, L"Steam API not initialized!\n");
+        return 0;
+    }
+
+    if (!suser)
+        suser = SteamAPI_SteamUser_v021();
+
+    if (suser && SteamAPI_ISteamUser_GetSteamID) {
+        CSteamID steamID = SteamAPI_ISteamUser_GetSteamID(suser);
+        fwprintf(stdout, L"Player Steam ID: %llu\n", steamID);
+        return steamID;
+    }
+
+    fwprintf(stderr, L"Failed to get Steam ID!\n");
+    return 0;
 }
 
 }
