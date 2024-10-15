@@ -6,6 +6,7 @@
 
 #include "bosses/data.hpp"
 #include "bosses/render.hpp"
+#include "Seed/SeedInfoAPI.hpp"
 
 #include <thread>
 #include <chrono>
@@ -83,6 +84,7 @@ void init() {
     er::bosses::gBossDataSet.load(dlcInstalled);
     er::bosses::gBossDataSet.loadConfig();
     er::bosses::gBossDataSet.initMemoryAddresses();
+    er::Seed::gSeedInfo.LoadFromFile();
 
     er::gHooking = std::make_unique<er::Hooking>();
     //  WAIT FOR USER INPUT
@@ -117,6 +119,7 @@ void mainThread() {
     er::gShowMenu = false;
     int counter = 0x1F;
     er::bosses::gBossDataSet.update();
+    er::Seed::gSeedInfo.update();
     while (er::gRunning) {
         if (er::gD3DRenderer->isForeground()) {
             if (!toggleFullKey.empty()) {
@@ -147,6 +150,7 @@ void mainThread() {
         counter = (counter + 1) & 0x1F;
         if (counter == 0) {
             er::bosses::gBossDataSet.update();
+            er::Seed::gSeedInfo.update();
         }
     }
 }

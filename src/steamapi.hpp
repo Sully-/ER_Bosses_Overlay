@@ -8,4 +8,5 @@ bool initSteamAPI();
 const std::wstring &getGameLanguage();
 bool isDLCInstalled(unsigned int dlc);
 unsigned long long getPlayerSteamID();
+
 }

@@ -15,6 +15,7 @@
 namespace er::bosses {
 
 BossDataSet gBossDataSet;
+
 static std::vector<bool> deadSwapTmp;
 static std::vector<int> deadByRegionSwapTmp;
 

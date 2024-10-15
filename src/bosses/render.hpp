@@ -6,7 +6,6 @@
 #include <cstdint>
 
 namespace er::bosses {
-    constexpr int TWO_HOURS_IN_MILLISECONDS = 2 * 60 * 60 * 1000;
 
 class Render : public RenderBase {
 public:
@@ -14,8 +13,9 @@ public:
     void render(bool &showFull) override;
 
 private:
+    void drawInfos();
     void popupEnd(int nbDeath, int timer);
-    const std::string seedFormatText_ = "[{2}] DRL Training : {0}/{1}";
+    const std::string seedFormatText_ = "{0} : {1}/{2}";
     std::string killText_;
     std::string challengeText_;
     bool allowRevive_ = false;

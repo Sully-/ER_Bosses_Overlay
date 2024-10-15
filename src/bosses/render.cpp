@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <chrono>
 #include <iomanip>
+#include "../Seed/SeedInfoAPI.hpp"
 
 namespace er::bosses {
 
@@ -103,8 +104,7 @@ void Render::popupEnd(int nbDeath, int timer)
         nullptr,
         ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove
         | ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::Text(dead_text);
-        
+        ImGui::Text(dead_text); 
         ImGui::SameLine();
 
         ImVec4 greenColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
@@ -112,19 +112,62 @@ void Render::popupEnd(int nbDeath, int timer)
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, greenColor);
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, blueColor);
         ImGui::PushStyleColor(ImGuiCol_Button, greenColor);
-
-
         // It will copy seed results in the future.
-        bool clicked = ImGui::Button("OK");
-
+        bool clicked_ok = ImGui::Button("OK");
         ImGui::PopStyleColor(3);
-        if (clicked) {
-            ImGui::CloseCurrentPopup();
-            endValidated_ = true;
+        if (clicked_ok) {
             popupBossIndex_ = -1;
+            Seed::gSeedInfo.ContinueToPlayWithoutUpdates();
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        ImVec4 redColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, redColor);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, blueColor);
+        ImGui::PushStyleColor(ImGuiCol_Button, redColor);
+        // It will copy seed results in the future.
+        bool clicked_continue = ImGui::Button("CONTINUE");
+        ImGui::PopStyleColor(3);
+        if (clicked_continue) {
+            popupBossIndex_ = -1;
+            Seed::gSeedInfo.Continue();
+            ImGui::CloseCurrentPopup();
         }
 
+
         ImGui::EndPopup();
+    }
+}
+
+void Render::drawInfos()
+{
+    auto deaths = Seed::gSeedInfo.Deaths();
+    
+    auto ingameTime = Seed::gSeedInfo.IGT();
+
+    auto text = fmt::format(seedFormatText_, er::Seed::gSeedInfo.getName(), gBossDataSet.count(), gBossDataSet.total());
+    auto timerText = fmt::format("[{0}]", ConvertMillisecondsToTimeString(ingameTime));
+    
+    ImVec4 orangeColor = ImVec4(1.0f, 0.5f, 0.0f, 1.0f);
+    ImVec4 redColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+    ImVec4 defaultColor = ImGui::GetStyleColorVec4(ImGuiCol_Text);
+
+    auto remainingTime = TWO_HOURS_IN_MILLISECONDS - ingameTime;
+    
+    ImVec4 textColor = (remainingTime <= 0) ? redColor : (remainingTime < 300000) ? orangeColor : defaultColor;
+
+    ImGui::PushStyleColor(ImGuiCol_Text, textColor);
+    ImGui::TextUnformatted(timerText.c_str());
+    ImGui::PopStyleColor();
+    ImGui::SameLine();
+    ImGui::TextUnformatted(text.c_str());
+    if (deaths > 0)
+    {
+        ImGui::SameLine();
+        auto deathText = fmt::format("Deaths : {0}", deaths);
+        ImGui::PushStyleColor(ImGuiCol_Text, redColor);
+        ImGui::TextUnformatted(deathText.c_str());
+        ImGui::PopStyleColor();
     }
 }
 
@@ -135,13 +178,15 @@ void Render::render(bool &showFull) {
     int ingameTime = 0;
     
     {
-        std::unique_lock lock(gBossDataSet.mutex());
-        deaths = gBossDataSet.deaths();
-        ingameTime = gBossDataSet.inGameTime();
+        std::unique_lock seedlock(Seed::gSeedInfo.mutex());
+        std::unique_lock bosslock(gBossDataSet.mutex());
+
+        deaths = Seed::gSeedInfo.Deaths();
+        ingameTime = Seed::gSeedInfo.IGT();
     }
 
     // If you died or we are at the end of the timer and we did not click on 'OK' on this session.
-    if ((deaths > 0 || ingameTime >= TWO_HOURS_IN_MILLISECONDS) && !endValidated_)
+    if (Seed::gSeedInfo.Ended() && !Seed::gSeedInfo.PlayWithoutUpdates())
     {
         popupEnd(deaths, ingameTime);
     }
@@ -157,19 +202,12 @@ void Render::render(bool &showFull) {
                          | ImGuiWindowFlags_AlwaysAutoResize);
         {
             std::unique_lock lock(gBossDataSet.mutex());
-            auto totalseconds = gBossDataSet.inGameTime();
+            auto totalmiliseconds = gBossDataSet.inGameTime();
             if (gBossDataSet.challengeMode()) {
                 auto text = fmt::format(challengeText_, gBossDataSet.count(), gBossDataSet.total(), gBossDataSet.challengeBest(), gBossDataSet.challengeTries(), gBossDataSet.challengeDeaths());
                 ImGui::TextUnformatted(text.c_str());
             } else {
-                auto text = fmt::format(seedFormatText_, gBossDataSet.count(), gBossDataSet.total(), ConvertMillisecondsToTimeString(totalseconds));
-                ImGui::TextUnformatted(text.c_str());
-                if (deaths > 0)
-                {
-                    ImGui::SameLine();
-                    auto deathText = fmt::format("Deaths : {0}", deaths);
-                    ImGui::TextUnformatted(deathText.c_str());
-                }
+                drawInfos();
             }
         }
         ImGui::SameLine();
@@ -195,14 +233,7 @@ void Render::render(bool &showFull) {
             auto text = fmt::format(challengeText_, gBossDataSet.count(), gBossDataSet.total(), gBossDataSet.challengeBest(), gBossDataSet.challengeTries(), gBossDataSet.challengeDeaths());
             ImGui::TextUnformatted(text.c_str());
         } else {
-            auto text = fmt::format(seedFormatText_, gBossDataSet.count(), gBossDataSet.total(), ConvertMillisecondsToTimeString(totalseconds));
-            ImGui::TextUnformatted(text.c_str());
-            if (deaths > 0)
-            {
-                ImGui::SameLine();
-                auto deathText = fmt::format("Deaths : {0}", deaths);
-                ImGui::TextUnformatted(deathText.c_str());
-            }
+            drawInfos();
         }
         auto &style = ImGui::GetStyle();
         ImGui::SameLine(

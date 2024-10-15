@@ -11,6 +11,9 @@
 
 namespace er::bosses {
 
+constexpr int TWO_HOURS_IN_MILLISECONDS = 2 * 60 * 60 * 1000;
+constexpr int FIVE_MINUTES_IN_MILISECONDS = 5 * 60 * 1000;
+
 struct BossData {
     std::string tip;
     std::string boss;

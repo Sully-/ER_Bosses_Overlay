@@ -27,11 +27,15 @@ add_library(${PROJECT_NAME} SHARED
     util/sysfont.cpp util/sysfont.hpp
     util/string.cpp util/string.hpp
     util/vector.hpp
+    util/crypto.hpp
 
     # Bosses panel
     bosses/data.cpp bosses/data.hpp
     bosses/render.cpp bosses/render.hpp
-)
+
+    #Seed
+    Seed/SeedInfoAPI.hpp
+    Seed/SeedInfoAPI.cpp)
 target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS)
 if(NOT MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE -mavx2 -mlzcnt -mbmi -mbmi2)
