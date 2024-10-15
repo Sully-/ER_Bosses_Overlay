@@ -107,7 +107,7 @@ void Render::render(bool &showFull) {
                 auto text = fmt::format(challengeText_, gBossDataSet.count(), gBossDataSet.total(), gBossDataSet.challengeBest(), gBossDataSet.challengeTries(), gBossDataSet.challengeDeaths());
                 ImGui::TextUnformatted(text.c_str());
             } else {
-                auto text = fmt::format("[{2}] DRL Training : {0}/{1}", gBossDataSet.count(), gBossDataSet.total(), ConvertMillisecondsToTimeString(totalseconds));
+                auto text = fmt::format("[{2}] DRL Training : {0}/{1}", gBossDataSet.score(), gBossDataSet.total(), ConvertMillisecondsToTimeString(totalseconds));
                 ImGui::TextUnformatted(text.c_str());
                 if (deaths > 0)
                 {
@@ -140,7 +140,7 @@ void Render::render(bool &showFull) {
             auto text = fmt::format(challengeText_, gBossDataSet.count(), gBossDataSet.total(), gBossDataSet.challengeBest(), gBossDataSet.challengeTries(), gBossDataSet.challengeDeaths());
             ImGui::TextUnformatted(text.c_str());
         } else {
-            auto text = fmt::format("[{2}] DRL Training : {0}/{1}", gBossDataSet.count(), gBossDataSet.total(), ConvertMillisecondsToTimeString(totalseconds));
+            auto text = fmt::format("[{2}] DRL Training : {0}/{1}", gBossDataSet.score(), gBossDataSet.total(), ConvertMillisecondsToTimeString(totalseconds));
             ImGui::TextUnformatted(text.c_str());
             if (deaths > 0)
             {

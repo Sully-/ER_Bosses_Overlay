@@ -152,7 +152,7 @@ void BossDataSet::update() {
     updateBosses();
     if (igt < 0) return;
     if (!challengeMode_)
-
+        updateDeathCount();
     updateChallengeMode();
 }
 
@@ -261,6 +261,7 @@ void BossDataSet::updateBosses() {
     }
     dead_.swap(deadSwapTmp);
     count_ = cnt;
+    score_ = score;
     if (challengeMode_ && cnt > challengeBest_ && challengeDeaths() <= challengeDeathCount_) {
         challengeBest_ = cnt;
         saveConfig();
