@@ -13,6 +13,7 @@
 #include <chrono>
 #include <iomanip>
 #include "../Seed/SeedInfoAPI.hpp"
+#include "../util/clipboard.hpp"
 
 namespace er::bosses {
 
@@ -139,6 +140,45 @@ void Render::popupEnd(int nbDeath, int timer)
     }
 }
 
+void drawSeedString()
+{
+    auto seedCyrptedString = Seed::gSeedInfo.GetCryptedString();
+    auto text = "[" + seedCyrptedString.substr(0, 10) + "...]";
+    ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImVec2 screenSize = viewport->Size;
+    ImVec2 textSize = ImGui::CalcTextSize(text.c_str());
+
+    ImGui::SetNextWindowPos(viewport->Pos, ImGuiCond_Always);
+    ImGui::SetNextWindowSize(viewport->Size, ImGuiCond_Always);
+
+    ImGui::Begin("##InvisibleWindow", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBackground);
+
+    ImVec2 textPos = ImVec2((screenSize.x - textSize.x) / 2.0f, 20.0f);
+    ImGui::SetCursorPos(textPos);
+
+    ImGui::TextUnformatted(text.c_str());
+
+    ImVec2 buttonSize = ImGui::CalcTextSize("Cpy");
+    ImVec2 buttonPos = ImVec2((screenSize.x - buttonSize.x) / 2.0f, textPos.y + textSize.y + 10.0f);
+    ImGui::SetCursorPos(buttonPos);
+
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.7f, 0.7f, 0.7f, 0.2f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.4f, 0.4f, 0.4f, 0.3f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.7f, 0.7f, 0.7f, 0.2f));
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.5f);
+    ImGui::SameLine();
+    if (ImGui::Button("Copy results"))
+    {
+        util::CopyToClipboard(seedCyrptedString);
+    }
+
+    ImGui::PopStyleVar();
+    ImGui::PopStyleColor(3);
+
+    ImGui::End();
+
+}
 void Render::drawInfos()
 {
     auto deaths = Seed::gSeedInfo.Deaths();
@@ -168,6 +208,12 @@ void Render::drawInfos()
         ImGui::PushStyleColor(ImGuiCol_Text, redColor);
         ImGui::TextUnformatted(deathText.c_str());
         ImGui::PopStyleColor();
+    }
+
+    // Display crypted dees info
+    if (Seed::gSeedInfo.Ended())
+    {
+        drawSeedString();
     }
 }
 

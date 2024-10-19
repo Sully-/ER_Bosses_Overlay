@@ -27,7 +27,8 @@ add_library(${PROJECT_NAME} SHARED
     util/sysfont.cpp util/sysfont.hpp
     util/string.cpp util/string.hpp
     util/vector.hpp
-    util/crypto.hpp
+    util/crypto.hpp util/crypto.cpp
+    util/clipboard.hpp
 
     # Bosses panel
     bosses/data.cpp bosses/data.hpp

@@ -11,6 +11,8 @@
 #include <mutex>
 #include <thread>
 
+#include "../util/crypto.hpp"
+
 namespace er::Seed
 {
     class SeedInfo {
@@ -19,7 +21,6 @@ namespace er::Seed
 
         SeedInfo();
 
-        std::string ToString() const;
         std::string getName() const;
         static bool FromString(const std::string& str, SeedInfo& info);
         inline std::mutex& mutex() { return mutex_; }
@@ -28,7 +29,10 @@ namespace er::Seed
         inline bool Ended() const { return ended_; }
         inline int IGT() const { return IGT_; }
         inline int PlayWithoutUpdates() const { return playWithoutUpdates_; }
-
+        inline std::string GetCryptedString() const { return er::util::encrypt(this->ToString(), cryptokey_);  }
+        
+        
+        std::string ToString() const;
         void LoadFromFile();
         bool saveToFile();
         void update();
@@ -36,6 +40,7 @@ namespace er::Seed
         void ContinueToPlayWithoutUpdates();
 
     private:
+
         int IGT_;
         int firstDeathTimeStamp_;
         int lastDeathTimeStamp_;
@@ -47,7 +52,6 @@ namespace er::Seed
         bool playWithoutUpdates_;
         static const std::string name_;
         static const std::string cryptokey_;
-
         std::mutex mutex_;
     };
 
