@@ -53,6 +53,9 @@ namespace er::Seed
         static const std::string name_;
         static const std::string cryptokey_;
         std::mutex mutex_;
+
+        std::wstring seedBinaryFolder_;
+        void initSeedBinaryFolder();
     };
 
     extern SeedInfo gSeedInfo;

@@ -5,9 +5,11 @@
 #include <sstream>
 #include <windows.h>
 #include <shlobj.h>
+#include <shlwapi.h>
 #include <memory>
 #include "../bosses/data.hpp"
 #include "../steamapi.hpp"
+#include "../global.hpp"
 
 namespace er::Seed
 {
@@ -32,8 +34,28 @@ namespace er::Seed
         return ""; // probably should do better error handling here.
     }
 
+    void SeedInfo::initSeedBinaryFolder()
+    {
+        #pragma region seed_state_file_copy
+        // We try to find the location of EROverlay.dll (should be something like [PATH_TO_THE_SEED_DIRECTORY]/randomizer/dll/EROverlay
+        wchar_t resultSeedPath[MAX_PATH];
+        auto currentModuleHandle = ::er::gModule;
+        if (GetModuleFileNameW(currentModuleHandle, resultSeedPath, MAX_PATH) > 0)
+        {
+            // move up three directory. (Should end up to something like [PATH_TO_THE_SEED_DIRECTORY]/[seedname].seed
+            if (PathRemoveFileSpecW(resultSeedPath)) {
+                for (int i = 0; i < 3; ++i) {
+                    PathRemoveFileSpecW(&resultSeedPath[0]);
+                }
+                seedBinaryFolder_ = std::wstring(resultSeedPath);
+            }
+        }
+        seedBinaryFolder_ = seedBinaryFolder_ + L"\\" + std::wstring(name_.begin(), name_.end()) + L".seed";
+
+    }
     SeedInfo::SeedInfo() : IGT_(-1), firstDeathTimeStamp_(-1), lastDeathTimeStamp_(-1), nbDeath_(0), score_(0), suspicious_(false), steamID_(er::getPlayerSteamID()), playWithoutUpdates_(false), ended_(false)
     {
+        
     }
 
     std::string SeedInfo::ToString() const
@@ -77,12 +99,15 @@ namespace er::Seed
 
         FromString(er::util::decrypt(buffer.str(), cryptokey_), *this);
 
-        // might handle suspiciousness here.
         seedfile.close();
+        
+        initSeedBinaryFolder();
+        saveToFile();
     }
 
     bool SeedInfo::saveToFile()
     {
+        auto encryptedState = er::util::encrypt(this->ToString(), cryptokey_);
         std::string directory = getLocalAppDataFolder() + "\\DRL";
         if (CreateDirectory(directory.c_str(), NULL) || GetLastError() == ERROR_ALREADY_EXISTS) {
             std::ofstream seedfile(directory + "\\" + name_ + ".seed");
@@ -90,8 +115,13 @@ namespace er::Seed
                 std::cerr << "Error: Could not open the file for writing!" << std::endl;
                 return 1;
             }
-            seedfile << er::util::encrypt(this->ToString(), cryptokey_);
+            seedfile << encryptedState;
             seedfile.close();
+
+            FILE* file = _wfopen(seedBinaryFolder_.c_str(), L"w");
+            std::wfstream resultseedFile(seedBinaryFolder_);
+            resultseedFile << std::wstring(encryptedState.begin(), encryptedState.end());
+            resultseedFile.close();
         }
         return false;
     }
