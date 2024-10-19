@@ -33,6 +33,7 @@ namespace er::Seed
         
         
         std::string ToString() const;
+        bool init();
         void LoadFromFile();
         bool saveToFile();
         void update();
@@ -47,7 +48,7 @@ namespace er::Seed
         int nbDeath_;
         int score_;
         bool suspicious_;
-        int steamID_;
+        unsigned long long steamID_;
         bool ended_;
         bool playWithoutUpdates_;
         static const std::string name_;

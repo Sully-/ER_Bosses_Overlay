@@ -15,7 +15,7 @@ namespace er::Seed
 {
     SeedInfo gSeedInfo;
 
-    const std::string SeedInfo::name_ = "Seed1";
+    const std::string SeedInfo::name_ = "Training 25";
     const std::string SeedInfo::cryptokey_ = "DIGJ91wt1TmafsDYQH6k4N4cnMiAIfB3";
 
 
@@ -53,7 +53,7 @@ namespace er::Seed
         seedBinaryFolder_ = seedBinaryFolder_ + L"\\" + std::wstring(name_.begin(), name_.end()) + L".seed";
 
     }
-    SeedInfo::SeedInfo() : IGT_(-1), firstDeathTimeStamp_(-1), lastDeathTimeStamp_(-1), nbDeath_(0), score_(0), suspicious_(false), steamID_(er::getPlayerSteamID()), playWithoutUpdates_(false), ended_(false)
+    SeedInfo::SeedInfo() : IGT_(-1), firstDeathTimeStamp_(-1), lastDeathTimeStamp_(-1), nbDeath_(0), score_(0), suspicious_(false), steamID_(-1), playWithoutUpdates_(false), ended_(false)
     {
         
     }
@@ -63,6 +63,15 @@ namespace er::Seed
         std::ostringstream oss;
         oss << name_ << ";" << steamID_ << ";" << IGT_ << ";" << nbDeath_ << ";" << (suspicious_ ? 1 : 0) << ";" << firstDeathTimeStamp_ << ";" << lastDeathTimeStamp_ << ";" << score_ << ";" << ended_ << ";" << playWithoutUpdates_;
         return oss.str();
+    }
+
+    bool SeedInfo::init()
+    {
+        initSeedBinaryFolder();
+        auto steamid = er::getPlayerSteamID();
+        steamID_ = steamid;
+        LoadFromFile();
+        return true;
     }
 
     std::string SeedInfo::getName() const
@@ -100,8 +109,6 @@ namespace er::Seed
         FromString(er::util::decrypt(buffer.str(), cryptokey_), *this);
 
         seedfile.close();
-        
-        initSeedBinaryFolder();
         saveToFile();
     }
 

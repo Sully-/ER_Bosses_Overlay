@@ -84,7 +84,7 @@ void init() {
     er::bosses::gBossDataSet.load(dlcInstalled);
     er::bosses::gBossDataSet.loadConfig();
     er::bosses::gBossDataSet.initMemoryAddresses();
-    er::Seed::gSeedInfo.LoadFromFile();
+    er::Seed::gSeedInfo.init();
 
     er::gHooking = std::make_unique<er::Hooking>();
     //  WAIT FOR USER INPUT
