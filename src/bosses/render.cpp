@@ -1,19 +1,15 @@
 #include "render.hpp"
 #include "data.hpp"
-
-#include "../config.hpp"
-#include "../util/string.hpp"
-
 #include <imgui.h>
-
 #include <fmt/format.h>
-
 #include <sstream>
 #include <algorithm>
 #include <chrono>
 #include <iomanip>
 #include "../Seed/SeedInfoAPI.hpp"
 #include "../util/clipboard.hpp"
+#include "../config.hpp"
+#include "../util/string.hpp"
 
 namespace er::bosses {
 
@@ -90,8 +86,7 @@ std::string ConvertMillisecondsToTimeString(int milliseconds) {
 void Render::popupEnd(int nbDeath, int timer)
 {
     auto* vp = ImGui::GetMainViewport();
-
-    const char* dead_text = timer >= TWO_HOURS_IN_MILLISECONDS ? "Timeout!" : "You died";
+    auto dead_text = timer >= TWO_HOURS_IN_MILLISECONDS ? TEXT_WHEN_TIMEOUT : TEXT_WHEN_DEAD;
 
     ImVec2 textSize = ImGui::CalcTextSize(dead_text);
     
@@ -108,34 +103,32 @@ void Render::popupEnd(int nbDeath, int timer)
         ImGui::Text(dead_text); 
         ImGui::SameLine();
 
-        ImVec4 greenColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
-        ImVec4 blueColor = ImVec4(0.26f, 0.59f, 0.98f, 1.0f);
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, greenColor);
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, blueColor);
         ImGui::PushStyleColor(ImGuiCol_Button, greenColor);
         // It will copy seed results in the future.
-        bool clicked_ok = ImGui::Button("OK");
+        bool clicked_ok = ImGui::Button(BUTTON_TEXT_WHEN_TIMEOUT);
         ImGui::PopStyleColor(3);
         if (clicked_ok) {
             popupBossIndex_ = -1;
             Seed::gSeedInfo.ContinueToPlayWithoutUpdates();
             ImGui::CloseCurrentPopup();
         }
-        ImGui::SameLine();
-        ImVec4 redColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, redColor);
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, blueColor);
-        ImGui::PushStyleColor(ImGuiCol_Button, redColor);
-        // It will copy seed results in the future.
-        bool clicked_continue = ImGui::Button("CONTINUE");
-        ImGui::PopStyleColor(3);
-        if (clicked_continue) {
-            popupBossIndex_ = -1;
-            Seed::gSeedInfo.Continue();
-            ImGui::CloseCurrentPopup();
+        if (timer < TWO_HOURS_IN_MILLISECONDS)
+        {
+            ImGui::SameLine();
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, redColor);
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, blueColor);
+            ImGui::PushStyleColor(ImGuiCol_Button, redColor);
+            // It will copy seed results in the future.
+            bool clicked_continue = ImGui::Button(BUTTON_TEXT_WHEN_DEAD);
+            ImGui::PopStyleColor(3);
+            if (clicked_continue) {
+                popupBossIndex_ = -1;
+                Seed::gSeedInfo.Continue();
+                ImGui::CloseCurrentPopup();
+            }
         }
-
-
         ImGui::EndPopup();
     }
 }

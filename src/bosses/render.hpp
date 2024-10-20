@@ -1,9 +1,10 @@
 #pragma once
 
-#include "../renderbase.hpp"
-
 #include <string>
 #include <cstdint>
+#include <imgui.h>
+
+#include "../renderbase.hpp"
 
 namespace er::bosses {
 
@@ -27,5 +28,16 @@ private:
     float width_ = 0.12f;
     float height_ = 0.9f;
 };
+
+
+constexpr const char * BUTTON_TEXT_WHEN_DEAD = "CONTINUE";
+constexpr const char* BUTTON_TEXT_WHEN_TIMEOUT = "TIMEOUT";
+constexpr const char* TEXT_WHEN_DEAD = "You Died!";
+constexpr const char* TEXT_WHEN_TIMEOUT = "Timeout!";
+
+
+const ImVec4 greenColor = ImVec4(0.5f, 0.85f, 0.5f, 0.7f);
+const ImVec4 blueColor = ImVec4(0.26f, 0.59f, 0.98f, 1.0f);
+const ImVec4 redColor = ImVec4(0.85f, 0.5f, 0.5f, 0.7f);
 
 }
