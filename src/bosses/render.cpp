@@ -187,7 +187,7 @@ void Render::drawInfos()
 
     auto remainingTime = TWO_HOURS_IN_MILLISECONDS - ingameTime;
     
-    ImVec4 textColor = (remainingTime <= 0) ? redColor : (remainingTime < 300000) ? orangeColor : defaultColor;
+    ImVec4 textColor = (remainingTime <= 0) ? redColor : (remainingTime < FIVE_MINUTES_IN_MILISECONDS) ? orangeColor : defaultColor;
 
     ImGui::PushStyleColor(ImGuiCol_Text, textColor);
     ImGui::TextUnformatted(timerText.c_str());

@@ -146,6 +146,14 @@ namespace er::Seed
             return;
 
         IGT_ = er::bosses::gBossDataSet.inGameTime();
+
+        er::bosses::gBossDataSet.resolveFlag(1042392181, suspiciousInvasionFlagOffset_, suspiciousInvasionFlagBits_);
+        auto suspicousInvasion = (*(uint8_t*)suspiciousInvasionFlagOffset_ & suspiciousInvasionFlagBits_) != 0;
+        if (suspicousInvasion)
+        {
+            suspicious_ = !suspicious_ ? suspicousInvasion : suspicious_;
+        }
+
         if (IGT_ >= er::bosses::TWO_HOURS_IN_MILLISECONDS)
         {
             needsave = true;

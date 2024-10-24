@@ -57,6 +57,10 @@ namespace er::Seed
 
         std::wstring seedBinaryFolder_;
         void initSeedBinaryFolder();
+
+        uintptr_t suspiciousInvasionFlagOffset_ = 0;
+        uint8_t suspiciousInvasionFlagBits_ = 0;
+        bool suspiciousInvation_ = true;
     };
 
     extern SeedInfo gSeedInfo;
