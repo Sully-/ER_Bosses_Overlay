@@ -6,8 +6,9 @@
 #include <mutex>
 #include <string>
 #include <vector>
-#include <map>
+#include <unordered_set>
 #include <cstdint>
+#include <map>
 
 namespace er::bosses {
 
@@ -53,6 +54,7 @@ public:
     void update();
     void revive(int index);
 
+    void set_event_flag_called(uint32_t param1, uint8_t param2);
     void resolveFlag(uint32_t flagId, uintptr_t &offset, uint8_t &bits) const;
 
 private:
@@ -61,8 +63,11 @@ private:
     void updateChallengeMode();
     void checkForConfigChange();
     [[nodiscard]] int currentDeathCount() const;
+    
 
 private:
+    static constexpr uint32_t BLOODY_FINGER_NERIJUS = 1043372715;
+
     std::vector<BossData> bosses_;
     std::vector<RegionData> regions_;
     std::map<uint32_t, int> regionMap_;
@@ -88,6 +93,11 @@ private:
     int challengeTries_ = 0;
     // Current death count
     int playerDeaths_ = 0;
+
+    int uncountedDeath_ = 0;
+
+    std::unordered_set<uint32_t> invasionThatCausedDeath_ = {};
+    std::unordered_set<uint32_t> invasionThatDidntCauseDeath_ = { BLOODY_FINGER_NERIJUS };
 
     // This flag is used to check if you reached the Stranded Graveyard,
     // Deaths is counted after this flag is set.

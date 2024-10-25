@@ -1,4 +1,5 @@
 #include "data.hpp"
+#include <MinHook.h>
 
 #include "../hooking.hpp"
 #include "../memory.hpp"
@@ -112,6 +113,19 @@ void BossDataSet::saveConfig() const {
     }
 }
 
+
+typedef void(__fastcall* TargetFunctionType)(void* context, uint32_t event_flag_id, uint8_t value);
+TargetFunctionType originalFunction = nullptr;
+
+
+void __fastcall Hookedset_event_flag(void* context, uint32_t event_flag_id, uint8_t value) {
+    if (event_flag_id == 3005)
+        gBossDataSet.set_event_flag_called(event_flag_id, value);
+    if (originalFunction) {
+        originalFunction(context, event_flag_id, value);
+    }
+}
+
 void BossDataSet::initMemoryAddresses() {
     {
         Signature sig("48 8B 05 ?? ?? ?? ?? 48 85 C0 74 05 48 8B 40 58 C3 C3");
@@ -137,6 +151,32 @@ void BossDataSet::initMemoryAddresses() {
             fieldArea_ = addr.as<uintptr_t>();
         }
     }
+
+
+    // hook the call to set_event_flag so we can catch called even flag
+    {
+        Signature sig("48 89 5c 24 08 44 8b 49 1c 44 8b d2 33 d2 41 8b c2 41 f7 f1 41 8b d8 4c 8b d9");
+        auto res = sig.scan();
+        if (res)
+        {
+            auto addr = res.as<std::uintptr_t>();
+            void* set_event_flag_addr = reinterpret_cast<void*>(addr);
+            // Initialiser MinHook
+            if (MH_Initialize() != MH_OK) {
+                return;  // Erreur à l'initialisation
+            }
+
+            if (MH_CreateHook(set_event_flag_addr, &Hookedset_event_flag, reinterpret_cast<LPVOID*>(&originalFunction)) != MH_OK) {
+                return;  // Erreur lors de la création du hook
+            }
+
+            // Activer le hook
+            if (MH_EnableHook(set_event_flag_addr) != MH_OK) {
+                return;  // Erreur lors de l'activation du hook
+            }
+        }
+        
+    }
 }
 
 void BossDataSet::update() {
@@ -149,7 +189,7 @@ void BossDataSet::update() {
     updateBosses();
     if (igt < 0) return;
     if (!challengeMode_)
-
+        updateDeathCount();
     updateChallengeMode();
 }
 
@@ -286,7 +326,7 @@ void BossDataSet::updateChallengeMode() {
         // Flag 101: Reached Stranded Graveyard
         resolveFlag(101, reachStrandedGraveyardFlagOffset_, reachStrandedGraveyardFlagBits_);
     }
-    auto deaths = currentDeathCount();
+    auto deaths = currentDeathCount() + uncountedDeath_;
     auto reached = (*(uint8_t *)reachStrandedGraveyardFlagOffset_ & reachStrandedGraveyardFlagBits_) != 0;
     bool needSave = false;
     std::unique_lock lock(mutex_);
@@ -335,6 +375,30 @@ int BossDataSet::currentDeathCount() const {
         return 0;
     }
     return MemoryHandle(addr + 0x94).as<int&>();
+}
+
+
+void BossDataSet::set_event_flag_called(uint32_t param1, uint8_t param2)
+{
+    std::unordered_set< uint32_t > invasion_to_remove = {};
+
+    std::unique_lock lock(gBossDataSet.mutex());
+    for (const int& invasion_id : invasionThatDidntCauseDeath_)
+    {
+        uintptr_t suspiciousInvasionFlagOffset_ = 0;
+        uint8_t suspiciousInvasionFlagBits_ = 0;
+        this->resolveFlag(invasion_id, suspiciousInvasionFlagOffset_, suspiciousInvasionFlagBits_);
+        auto suspicousInvasion = (*(uint8_t*)suspiciousInvasionFlagOffset_ & suspiciousInvasionFlagBits_) != 0;
+        if (suspicousInvasion)
+        {
+            uncountedDeath_++;
+            invasion_to_remove.insert(invasion_id);
+        }
+    }
+    for (const int& invasion_id_to_remove : invasion_to_remove)
+    {
+        invasionThatDidntCauseDeath_.erase(invasion_id_to_remove);
+    }
 }
 
 }
