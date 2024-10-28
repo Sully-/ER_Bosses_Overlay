@@ -191,7 +191,8 @@ void BossDataSet::update() {
     if (igt < 0) return;
     if (!challengeMode_)
         updateDeathCount();
-    updateChallengeMode();
+    else
+        updateChallengeMode();
 }
 
 void BossDataSet::revive(int index) {
@@ -315,7 +316,7 @@ void BossDataSet::updateBosses() {
 
 void BossDataSet::updateDeathCount()
 {
-    auto deaths = currentDeathCount();
+    auto deaths = currentDeathCount() + uncountedDeath_;;
     std::unique_lock lock(mutex_);
     if (deaths != playerDeaths_) {
         playerDeaths_ = deaths;
