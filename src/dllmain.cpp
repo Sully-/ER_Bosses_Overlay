@@ -67,7 +67,7 @@ void init() {
     checkGameVersion();
     GetModuleFileNameW(::er::gModule, ::er::gModulePath, MAX_PATH);
     PathRemoveFileSpecW(::er::gModulePath);
-    er::gConfig.load(std::wstring(::er::gModulePath) + L"\\EROverlay.ini");
+    //er::gConfig.load(std::wstring(::er::gModulePath) + L"\\EROverlay.ini");
     bool enableConsole = false;
     if (er::gConfig.enabled("common.console")) {
         enableConsole = true;
@@ -79,19 +79,19 @@ void init() {
 
     std::this_thread::sleep_for(1000ms);
     er::initSteamAPI();
-    bool dlcInstalled = er::isDLCInstalled(2778580) || er::isDLCInstalled(2778590);
-    fwprintf(stderr, L"DLC \"Shadow of the Erdtree\" is %ls\n", dlcInstalled ? L"installed" : L"not installed");
-    er::bosses::gBossDataSet.load(dlcInstalled);
-    er::bosses::gBossDataSet.loadConfig();
-    er::bosses::gBossDataSet.initMemoryAddresses();
-    er::Seed::gSeedInfo.init();
+    //bool dlcInstalled = er::isDLCInstalled(2778580) || er::isDLCInstalled(2778590);
+    //fwprintf(stderr, L"DLC \"Shadow of the Erdtree\" is %ls\n", dlcInstalled ? L"installed" : L"not installed");
+    //er::bosses::gBossDataSet.load(dlcInstalled);
+    //er::bosses::gBossDataSet.loadConfig();
+    //er::bosses::gBossDataSet.initMemoryAddresses();
+    //er::Seed::gSeedInfo.init();
 
     er::gHooking = std::make_unique<er::Hooking>();
     //  WAIT FOR USER INPUT
     while (!er::gHooking->menuLoaded()) {
         std::this_thread::sleep_for(1000ms);
     }
-    std::this_thread::sleep_for(2000ms);
+    std::this_thread::sleep_for(20000ms);
     /* do not hook on game loading, high risk of crash */
     while (er::gHooking->screenState() == 1) {
         std::this_thread::sleep_for(100ms);
@@ -102,14 +102,14 @@ void init() {
 
     er::gHooking->hook();
 
-    mainThread();
+    //mainThread();
 
-    er::gHooking->unhook();
-    std::this_thread::sleep_for(500ms);
-    if (enableConsole) {
-        FreeConsole();
-    }
-    FreeLibraryAndExitThread(er::gModule, 0);
+    //er::gHooking->unhook();
+    //std::this_thread::sleep_for(500ms);
+    //if (enableConsole) {
+    //    FreeConsole();
+    //}
+    //FreeLibraryAndExitThread(er::gModule, 0);
 }
 
 void mainThread() {
@@ -118,30 +118,30 @@ void mainThread() {
 
     er::gShowMenu = false;
     int counter = 0x1F;
-    er::bosses::gBossDataSet.update();
-    er::Seed::gSeedInfo.update();
+    //er::bosses::gBossDataSet.update();
+    //er::Seed::gSeedInfo.update();
     while (er::gRunning) {
-        if (er::gD3DRenderer->isForeground()) {
-            if (!toggleFullKey.empty()) {
-                for (auto &vk: toggleFullKey) {
-                    if (!(GetAsyncKeyState(vk & 0x7FFF) & ((vk & 0x8000) != 0 ? 0x8000 : 1))) {
-                        goto noToggleFull;
-                    }
-                }
-                er::gShowMenu = !er::gShowMenu;
-            }
-            noToggleFull:
-            if (!unloadKey.empty()) {
-                for (auto &vk: unloadKey) {
-                    if (!(GetAsyncKeyState(vk & 0x7FFF) & ((vk & 0x8000) != 0 ? 0x8000 : 1))) {
-                        goto noUnload;
-                    }
-                }
-                er::gShowMenu = false;
-                er::gRunning = false;
-                er::gHooking->showMouseCursor(false);
-            }
-        }
+        //if (er::gD3DRenderer->isForeground()) {
+        //    if (!toggleFullKey.empty()) {
+        //        for (auto &vk: toggleFullKey) {
+        //            if (!(GetAsyncKeyState(vk & 0x7FFF) & ((vk & 0x8000) != 0 ? 0x8000 : 1))) {
+        //                goto noToggleFull;
+        //            }
+        //        }
+        //        er::gShowMenu = !er::gShowMenu;
+        //    }
+        //    noToggleFull:
+        //    if (!unloadKey.empty()) {
+        //        for (auto &vk: unloadKey) {
+        //            if (!(GetAsyncKeyState(vk & 0x7FFF) & ((vk & 0x8000) != 0 ? 0x8000 : 1))) {
+        //                goto noUnload;
+        //            }
+        //        }
+        //        er::gShowMenu = false;
+        //        er::gRunning = false;
+        //        er::gHooking->showMouseCursor(false);
+        //    }
+        //}
         noUnload:
 
         std::this_thread::yield();
@@ -149,8 +149,8 @@ void mainThread() {
 
         counter = (counter + 1) & 0x1F;
         if (counter == 0) {
-            er::bosses::gBossDataSet.update();
-            er::Seed::gSeedInfo.update();
+            //er::bosses::gBossDataSet.update();
+            //er::Seed::gSeedInfo.update();
         }
     }
 }

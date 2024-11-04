@@ -212,6 +212,12 @@ void Render::drawInfos()
 
 void Render::render(bool &showFull) {
     auto* vp = ImGui::GetMainViewport();
+    ImGui::Begin("##bosses_window",
+        nullptr,
+        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+    ImGui::TextUnformatted("Debug");
+    ImGui::End();
+    return;
 
     int deaths = 0;
     int ingameTime = 0;
