@@ -271,7 +271,14 @@ void D3DRenderer::initOverlay() {
 void D3DRenderer::overlay(IDXGISwapChain3 *pSwapChain) {
     if (commandQueue_ == nullptr)
         return;
-
+    if (fence_ == nullptr)
+    {
+        ID3D12Device* device;
+        if (pSwapChain->GetDevice(IID_PPV_ARGS(&device)) != S_OK)
+            return;
+        fence_ = new Fence(device);
+        device->Release();
+    }
     DXGI_SWAP_CHAIN_DESC sd;
     pSwapChain->GetDesc(&sd);
 
@@ -418,6 +425,10 @@ void D3DRenderer::overlay(IDXGISwapChain3 *pSwapChain) {
         commandList_->Close();
 
         commandQueue_->ExecuteCommandLists(1, reinterpret_cast<ID3D12CommandList **>(&commandList_));
+        commandQueue_->Signal(fence_->getFence(), fence_->getValue());
+        fence_->wait();
+        fence_->increment();
+
     }
 }
 

@@ -13,7 +13,72 @@
 #include <memory>
 #include <cstdint>
 
+#include <windows.h>
+#include <wrl.h>
+#include <d3d12.h>
+#include <atomic>
+#include <stdexcept>
+
 namespace er {
+
+    using Microsoft::WRL::ComPtr;
+
+    class Fence {
+    public:
+        // Constructeur de la classe Fence
+        Fence(ID3D12Device* device) : value(0) {
+            // Créer la fence avec une valeur initiale de 0
+            if (FAILED(device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)))) {
+                throw std::runtime_error("Failed to create fence");
+            }
+
+            // Créer un événement non signalé pour la synchronisation
+            event = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+            if (!event) {
+                throw std::runtime_error("Failed to create event");
+            }
+        }
+
+        ~Fence() {
+            // Fermer le handle de l'événement
+            CloseHandle(event);
+        }
+
+        // Retourne la valeur actuelle de la fence
+        uint64_t getValue() const {
+            return value.load(std::memory_order_seq_cst);
+        }
+
+        // Incrémente la valeur de la fence
+        void increment() {
+            value.fetch_add(1, std::memory_order_seq_cst);
+        }
+
+        // Attendre la complétion de la fence
+        void wait() {
+            const uint64_t fenceValue = getValue();
+
+            // Vérifie si la valeur de complétion de la fence est atteinte
+            if (fence->GetCompletedValue() < fenceValue) {
+                // Associe l'événement à la valeur de complétion
+                if (FAILED(fence->SetEventOnCompletion(fenceValue, event))) {
+                    throw std::runtime_error("Failed to set event on fence completion");
+                }
+                // Attend que la valeur de la fence soit atteinte
+                WaitForSingleObject(event, INFINITE);
+            }
+        }
+
+        // Retourne la fence sous-jacente pour les appels d'API
+        ID3D12Fence* getFence() const {
+            return fence.Get();
+        }
+
+    private:
+        ComPtr<ID3D12Fence> fence;
+        std::atomic<uint64_t> value;
+        HANDLE event;
+    };
 
 class D3DRenderer {
 /*
@@ -167,6 +232,7 @@ private:
     std::vector<std::unique_ptr<RenderBase>> windows_;
     float fontSize_ = 0.0f;
     const ImWchar *charsetRange_;
+    Fence* fence_ = nullptr;
 };
 
 inline std::unique_ptr<D3DRenderer> gD3DRenderer;
